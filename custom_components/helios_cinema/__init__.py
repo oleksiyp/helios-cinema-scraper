@@ -8,7 +8,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, discovery
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,8 +36,8 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     if DOMAIN in config:
         hass.data[DOMAIN].update(config[DOMAIN])
     
-    # Load the sensor platform
-    await hass.helpers.discovery.async_load_platform(Platform.SENSOR, DOMAIN, {}, config)
+    # Load the sensor platform using the proper discovery import
+    await discovery.async_load_platform(hass, Platform.SENSOR, DOMAIN, {}, config)
     
     return True
 
