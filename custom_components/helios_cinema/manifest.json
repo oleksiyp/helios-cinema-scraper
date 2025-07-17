@@ -1,9 +1,9 @@
 {
   "domain": "helios_cinema",
-  "name": "Helios Cinema Card",
+  "name": "Helios Cinema Scraper",
   "version": "1.0.0",
-  "documentation": "https://github.com/oleksiyp/helios-cinema-card",
-  "issue_tracker": "https://github.com/oleksiyp/helios-cinema-card/issues",
+  "documentation": "https://github.com/oleksiyp/helios-cinema-scraper",
+  "issue_tracker": "https://github.com/oleksiyp/helios-cinema-scraper/issues",
   "dependencies": [],
   "codeowners": ["@oleksiyp"],
   "requirements": [
