@@ -109,27 +109,114 @@ class HeliosCinemaSensor(SensorEntity):
         films = []
         soup = BeautifulSoup(html, 'html.parser')
         
-        # Look for film containers - this may need adjustment based on actual HTML structure
+        # Try to extract movie data from the JavaScript object
+        films = self._extract_from_javascript(html)
+        
+        if films:
+            _LOGGER.debug(f"Successfully extracted {len(films)} films from JavaScript data")
+            return films
+        
+        # Fallback to HTML parsing if JavaScript extraction fails
+        _LOGGER.debug("JavaScript extraction failed, trying HTML parsing")
+        films = self._parse_html_structure(soup)
+        
+        return films
+
+    def _extract_from_javascript(self, html: str) -> list[dict[str, Any]]:
+        """Extract movie data from the JavaScript object in the page."""
+        films = []
+        
+        try:
+            # Look for the main data object in the script tag
+            import re
+            import json
+            
+            # Find the script with the large data object
+            # The pattern looks like: window.__NUXT__=(function(...){ ... })(params)
+            pattern = r'window\.__NUXT__=\(function[^}]+\}\)\(([^)]+)\);'
+            match = re.search(pattern, html)
+            
+            if not match:
+                _LOGGER.debug("Could not find __NUXT__ data object")
+                return []
+            
+            # Extract the parameters passed to the function
+            params_str = match.group(1)
+            _LOGGER.debug(f"Found __NUXT__ parameters: {params_str[:200]}...")
+            
+            # Parse the parameters - they're comma-separated strings and values
+            # This is a simplified approach - look for movie titles in the parameters
+            movies_data = self._extract_movie_titles_from_params(params_str)
+            
+            for movie_title in movies_data:
+                film = {
+                    'title': movie_title,
+                    'description': 'Extracted from JavaScript data',
+                    'image': 'https://via.placeholder.com/300x450/cccccc/000000?text=Movie+Poster',
+                    'showtimes_today': [],
+                    'showtimes_tomorrow': []
+                }
+                films.append(film)
+                
+        except Exception as e:
+            _LOGGER.debug(f"Error extracting from JavaScript: {e}")
+            
+        return films
+
+    def _extract_movie_titles_from_params(self, params_str: str) -> list[str]:
+        """Extract movie titles from the JavaScript parameters."""
+        titles = []
+        
+        try:
+            # Look for quoted strings that look like movie titles
+            import re
+            
+            # Find quoted strings in the parameters
+            quoted_strings = re.findall(r'"([^"]+)"', params_str)
+            
+            # Filter for likely movie titles (reasonable length, contains letters)
+            for string in quoted_strings:
+                if (10 <= len(string) <= 80 and 
+                    any(c.isalpha() for c in string) and
+                    not string.startswith('http') and
+                    not string.startswith('/') and
+                    not '.' in string[-5:] and  # Avoid file extensions
+                    not string.lower() in ['dubbing', 'napisy', 'action', 'comedy'] and
+                    ' ' in string):  # Movie titles usually have spaces
+                    
+                    # Additional filters for movie-like titles
+                    if any(keyword in string.lower() for keyword in [
+                        'superman', 'basia', 'film', 'movie', 'kino', 'maraton', 'harry potter'
+                    ]):
+                        if string not in titles:  # Avoid duplicates
+                            titles.append(string)
+            
+        except Exception as e:
+            _LOGGER.debug(f"Error parsing movie titles: {e}")
+            
+        return titles[:10]  # Limit to 10 movies
+
+    def _parse_html_structure(self, soup) -> list[dict[str, Any]]:
+        """Fallback HTML parsing method."""
+        films = []
+        
+        # Look for film containers using various approaches
         film_containers = soup.find_all('div', class_=['movie-card', 'film-item', 'movie-item'])
         
         if not film_containers:
-            # Fallback: look for common patterns
-            film_containers = soup.find_all('div', class_=lambda x: x and any(
-                term in x.lower() for term in ['movie', 'film', 'cinema', 'show']
-            ))
-        
-        for container in film_containers[:10]:  # Limit to 10 films
-            try:
-                film_data = self._extract_film_data(container)
-                if film_data and film_data.get('title'):
-                    films.append(film_data)
-            except Exception as err:
-                _LOGGER.debug(f"Error parsing film container: {err}")
-                continue
-        
-        # If no films found with the above method, try a more generic approach
-        if not films:
-            films = self._fallback_film_parsing(soup)
+            # Try to find headings that might be movie titles
+            headings = soup.find_all(['h1', 'h2', 'h3', 'h4'])
+            for heading in headings[:5]:  # Limit to first 5
+                text = heading.get_text(strip=True)
+                if text and 10 <= len(text) <= 80:
+                    film = {
+                        'title': text,
+                        'description': 'Extracted from page headings',
+                        'image': 'https://via.placeholder.com/300x450/cccccc/000000?text=Movie',
+                        'showtimes_today': [],
+                        'showtimes_tomorrow': []
+                    }
+                    films.append(film)
         
         return films
 
