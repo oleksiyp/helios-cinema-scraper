@@ -1,0 +1,50 @@
+# Example Home Assistant configuration for Helios Cinema Card
+
+# Add this to your configuration.yaml
+helios_cinema:
+  update_interval: 30  # Update every 30 minutes
+  cinema_url: "https://helios.pl/wroclaw/kino-helios-magnolia"  # Cinema URL
+  cinema_name: "Helios Magnolia"  # Custom name for the cinema
+
+# Examples for different Helios cinemas:
+# 
+# For Warsaw City:
+# helios_cinema:
+#   cinema_url: "https://helios.pl/warszawa/kino-helios-city"
+#   cinema_name: "Helios City Warsaw"
+#
+# For Krakow Plaza:
+# helios_cinema:
+#   cinema_url: "https://helios.pl/krakow/kino-helios-plaza"
+#   cinema_name: "Helios Plaza Krakow"
+#
+# For Gdansk Madison:
+# helios_cinema:
+#   cinema_url: "https://helios.pl/gdansk/kino-helios-madison"
+#   cinema_name: "Helios Madison Gdansk"
+
+# Add this to your ui-lovelace.yaml or dashboard configuration
+# Make sure to add the resource first:
+# resources:
+#   - url: /local/helios-cinema-card.js
+#     type: module
+
+# Example card configuration:
+# type: custom:helios-cinema-card
+# entity: sensor.helios_cinema_films_magnolia  # Entity name changes based on cinema
+# name: "Helios Magnolia"
+# auto_rotate: true
+# rotate_interval: 5000
+# manual_timeout: 30000
+
+# Example automation to notify about new films:
+# automation:
+#   - alias: "New Films Alert"
+#     trigger:
+#       - platform: state
+#         entity_id: sensor.helios_cinema_films_magnolia
+#     action:
+#       - service: notify.mobile_app_your_phone
+#         data:
+#           title: "Cinema Update"
+#           message: "{{ states('sensor.helios_cinema_films_magnolia') }} films available at {{ state_attr('sensor.helios_cinema_films_magnolia', 'cinema_name') }}"

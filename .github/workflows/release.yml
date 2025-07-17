@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes in this Release
+          - Check the commit history for detailed changes
+          
+          ## Installation
+          
+          ### HACS (Recommended)
+          1. Add this repository as a custom repository in HACS
+          2. Install "Helios Cinema Scraper" through HACS
+          3. Restart Home Assistant
+          
+          ### Manual Installation
+          1. Download the latest release
+          2. Copy `custom_components/helios_cinema` to your Home Assistant `custom_components` directory
+          3. Restart Home Assistant
+          
+          ## Configuration
+          
+          Add to your `configuration.yaml`:
+          
+          ```yaml
+          sensor:
+            - platform: helios_cinema
+              cinema_url: "https://helios.pl/wroclaw/kino-helios-magnolia"
+              cinema_name: "Wrocław Magnolia"
+              update_interval: 60
+          ```
+        draft: false
+        prerelease: false
+
+  validate-before-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Validate integration
+      run: |
+        python -m py_compile custom_components/helios_cinema/__init__.py
+        python -m py_compile custom_components/helios_cinema/sensor.py
+        echo "Integration validation passed!"

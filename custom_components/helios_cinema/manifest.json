@@ -1,0 +1,17 @@
+{
+  "domain": "helios_cinema",
+  "name": "Helios Cinema Card",
+  "version": "1.0.0",
+  "documentation": "https://github.com/oleksiyp/helios-cinema-card",
+  "issue_tracker": "https://github.com/oleksiyp/helios-cinema-card/issues",
+  "dependencies": [],
+  "codeowners": ["@oleksiyp"],
+  "requirements": [
+    "aiohttp>=3.8.0",
+    "beautifulsoup4>=4.9.3",
+    "lxml>=4.6.3"
+  ],
+  "iot_class": "cloud_polling",
+  "config_flow": false,
+  "integration_type": "service"
+}
